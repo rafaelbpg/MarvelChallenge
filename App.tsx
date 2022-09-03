@@ -10,7 +10,7 @@
  import { enableScreens } from 'react-native-screens'; 
  // run this before any screen render(usually in App.js)
  enableScreens();
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -19,6 +19,7 @@ import {
   Text,
   Button,
   StatusBar,
+  TextInput
 } from 'react-native';
 
 import {
@@ -28,18 +29,45 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 declare const global: {HermesInternal: null | {}};
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 const HomeScreen = ({ navigation }) => {
+  const [text, setText] = useState('');
+  const storeData = async (value: string) => {
+    try {
+      await AsyncStorage.setItem('@storage_Key', value)
+    } catch (e) {
+      // saving error
+    }
+  }
+  const getData = async () => {
+    const value = await AsyncStorage.getItem('@storage_Key')
+    return value || ''
+  }
   return (
-    <Button
+    <>
+      <TextInput
+        style={{height: 40}}
+        placeholder="Type here to translate!"
+        onChangeText={text => storeData(text)}
+        defaultValue={text}
+      />
+      <Button
+        title="Get the store text" 
+        onPress={async () => setText(await getData())}
+      />
+      <Text> {text} </Text>
+      <Button
       title="Go to Jane's profile"
       onPress={() =>
         navigation.navigate('Profile', { name: 'Jane' })
       }
     />
+    </>
+
   );
 };
 const ProfileScreen = ({ navigation, route }) => {
