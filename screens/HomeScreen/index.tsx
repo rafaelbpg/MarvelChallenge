@@ -4,18 +4,18 @@ import React, { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 
 
-const LoginScreen : React.FC = () => {
+const HomeScreen : React.FC = () => {
     const [text, setText] = useState('');
     const navigation = useNavigation()
     
     return( 
         <View>
-            <Text>Login Screen</Text>
+            <Text>Home Screen</Text>
             <Button
-                title="Go to Profile"
-                onPress={() => navigation.navigate('Profile')}
+                title="Go to Login"
+                onPress={() => navigation.navigate('Login')}
             />
         </View>
     )
 };
-export default LoginScreen;
+export default HomeScreen;
