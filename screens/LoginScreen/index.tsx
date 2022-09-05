@@ -4,7 +4,7 @@ import tw from 'twrnc'
 import LoginScreenController from './LoginScreenController'
 
 const LoginScreen : React.FC = () => {
-    const {setEmail, setPassword} = LoginScreenController()
+    const {username, password, setUsername, setPassword, fillWithTestUser, signIn} = LoginScreenController()
     return( 
         <View style={tw`bg-black h-full`}>
             <View style={tw`flex flex-col items-center justify-center py-32 w-full px-4 mx-auto `}>
@@ -21,12 +21,14 @@ const LoginScreen : React.FC = () => {
                     </View>
                     <View style={tw`mt-4 px-2`}>
                         <TextInput
+                            value={username}
                             style={tw`bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg p-2.5`}
-                            onChangeText = { text => setEmail(text)}
+                            onChangeText = { text => setUsername(text)}
                             placeholder='Username...' />
                     </View>
                     <View style={tw`mt-4 px-2`}>
                         <TextInput
+                            value={password}
                             secureTextEntry={true}
                             onChangeText = { text => setPassword(text)}
                             style={tw`bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg p-2.5`}
@@ -34,8 +36,17 @@ const LoginScreen : React.FC = () => {
                     </View>
                     <View style={tw`mt-4 px-2`}>
                         <Pressable
-                            style={tw`w-full bg-red-600 p-4 rounded-xl pressed:bg-blue-500`}>
+                            onPressIn={(event) => signIn()}
+                            style={({ pressed }) => [ tw`w-full p-4 rounded-xl pressed:bg-blue-500 ${pressed ? 'bg-red-500' : 'bg-red-600'}`]}>
                                 <Text style={tw`text-white text-center text-5`}>Sign in</Text>
+                        </Pressable>
+                    </View>
+                    <View style={tw`mt-4 px-2`}>
+                        <Pressable
+                            onPressIn={(event) => fillWithTestUser()}
+                            style={({ pressed }) => [
+                                tw`w-full bg-black p-4 rounded-xl ${pressed ? 'bg-gray-900' : ''}`]}>
+                                <Text style={tw`text-white text-center text-5`}>Fill with test user</Text>
                         </Pressable>
                     </View>
                 </View>
