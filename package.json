@@ -19,7 +19,7 @@
     "apisauce": "^2.1.6",
     "buffer": "^6.0.3",
     "react": "16.13.1",
-    "react-native": "0.63.4",
+    "react-native": "0.70.0",
     "react-native-gesture-handler": "1.0.0",
     "react-native-reanimated": "^1.13.4",
     "react-native-safe-area-context": "^2.0.3",
