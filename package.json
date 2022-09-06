@@ -16,6 +16,7 @@
     "@react-navigation/native": "5.7.6",
     "@react-navigation/native-stack": "^5.0.5",
     "@react-navigation/stack": "^5.9.1",
+    "apisauce": "^2.1.6",
     "buffer": "^6.0.3",
     "react": "16.13.1",
     "react-native": "0.63.4",
@@ -24,6 +25,8 @@
     "react-native-safe-area-context": "^2.0.3",
     "react-native-screens": "2.14",
     "react-native-tab-view": "2.9",
+    "react-native-vector-icons": "^9.2.0",
+    "react-native-vector-image": "^0.3.3",
     "twrnc": "^3.4.0",
     "use-subscription": "1.4.1"
   },
