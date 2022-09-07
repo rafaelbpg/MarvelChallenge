@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { retrieveData, storeData } from "./storage"
 import { TokenModel } from "../models/TokenModel"
 import { UserModel } from "../models/UserModel"
@@ -42,10 +43,10 @@ async function saveUserInStorage($user : UserModel): Promise<void>{
     storeData('user', JSON.stringify($user))
 }
 
-async function retrieveUserFromStorage() : Promise<UserModel | undefined> {
+async function retrieveUserFromStorage() : Promise<UserModel> {
     const user = await retrieveData('user')
     if (user === '' || user === null || user === undefined){
-        return undefined
+        throw new Error('User is not logged')
     }
     return JSON.parse(user)
 }
@@ -59,7 +60,8 @@ async function retrieveToken() : Promise<TokenModel | undefined> {
 }
 
 async function logout() : Promise<void> {
-    storeData('token', '');
+    storeData('token', '')
+    storeData('user', '')
 }
 
 export {
@@ -68,5 +70,6 @@ export {
     saveToken,
     retrieveToken,
     generateToken,
+    retrieveUserFromStorage,
     wrongUsernameAndOrPassword
 }
