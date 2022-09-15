@@ -1,8 +1,7 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {Text, View, Image, TextInput, Pressable} from 'react-native';
 import tw from 'twrnc';
 import LoginScreenController from './LoginScreenController';
-import {ApisauceInstance, create} from 'apisauce';
 const LoginScreen: React.FC = () => {
   const {
     username,

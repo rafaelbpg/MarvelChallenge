@@ -9,6 +9,8 @@ import {
 } from 'react';
 import {Button, FlatList, Image, Pressable, Text, View} from 'react-native';
 import tw from 'twrnc';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {retrieveData, storeData} from '../services/storage';
 
 type MarvelHeroesListResponse = {
   code: number;
@@ -82,8 +84,7 @@ type MarvelHeroData = Array<{
   count: number;
   results: Array<HeroType>;
 }>;
-
-type MarvelComicData = Array<{
+type ComicType = {
   offset: number;
   limit: number;
   total: number;
@@ -167,7 +168,8 @@ type MarvelComicData = Array<{
       }>;
     };
   }>;
-}>;
+};
+type MarvelComicData = Array<ComicType>;
 type MarvelData = MarvelHeroData | MarvelComicData;
 
 type ContextStateUninitialized = {
@@ -253,15 +255,30 @@ const marvelProxy = new Proxy<MarvelResponse>(
           return;
         }
         try {
-          const response = await (
-            target as {
-              results: {
-                [key in string]?: T;
-              };
-              apiInstance: ApisauceInstance;
-            }
-          ).apiInstance.get<T>(url);
-          const {data} = response;
+          const pathUrl = url.split('?')[0];
+          const limit = url.split('limit=')[1].split('&')[0];
+          const offset = url.split('offset=')[1].split('/')[0];
+          const storeKey = `${pathUrl}limit${limit}offset${offset}`;
+          const dataStored = await retrieveData(storeKey);
+          let response;
+          let data;
+          if (!dataStored) {
+            console.log("Descargando data nueva")
+            response = await (
+              target as {
+                results: {
+                  [key in string]?: T;
+                };
+                apiInstance: ApisauceInstance;
+              }
+            ).apiInstance.get<T>(url);
+            data = response.data;
+            storeData(storeKey, JSON.stringify(data))
+          }
+          else {
+            console.log("Buscando en caché")
+            data = JSON.parse(dataStored)
+          }
           if (data?.status !== 'Ok') {
             throw new Error('Error fetching data');
           }
@@ -350,7 +367,6 @@ export function CachedRequestsProvider({
   }, [page, state]);
 
   useEffect(() => {
-    console.log('Fetching');
     if (state.isFetching || !state.url) {
       return;
     }
@@ -358,6 +374,7 @@ export function CachedRequestsProvider({
       state.url !== url
         ? {
             isFetching: true,
+            data: undefined,
             url,
           }
         : {
@@ -366,11 +383,11 @@ export function CachedRequestsProvider({
           },
     );
     marvelProxy[getNavigatableUrl()].then((value) => {
-      const newResults = value?.data?.results
-      const oldResults = state?.data?.characters?.data?.results
-      if (newResults && oldResults){
-        const mixedResults = oldResults.concat(newResults)
-        value.data.results = mixedResults
+      const newResults = value?.data?.results;
+      const oldResults = state?.data?.characters?.data?.results;
+      if (newResults && oldResults) {
+        const mixedResults = oldResults.concat(newResults);
+        value.data.results = mixedResults;
       }
       setState({
         ...state,
@@ -402,10 +419,17 @@ const Hero: React.FC<HeroType> = (props) => {
       'http://',
       'https://',
     );
+  const paramsForNavigation = {
+    id: props.id,
+    name: props.name,
+    description: props.description,
+    urlImage: urlImage,
+  };
+  const navigation = useNavigation();
   return (
     <View>
       <Pressable
-        onPress={() => 1}
+        onPress={() => navigation.navigate('Details', paramsForNavigation)}
         style={{
           alignSelf: 'center',
           marginTop: 20,
@@ -418,11 +442,14 @@ const Hero: React.FC<HeroType> = (props) => {
           {props.name}
         </Text>
         <Image source={{uri: urlImage}} style={{width: 300, height: 300}} />
-        <Text style={tw`text-lg text-white text-center mt-1`}>{props.comics.available} comics</Text>
+        <Text style={tw`text-lg text-white text-center mt-1`}>
+          {props.comics.available} comics
+        </Text>
       </Pressable>
     </View>
   );
 };
+
 function HeroesList() {
   const [state, actions] = useCachedRequests();
   const [heroes, setHeroes] = useState<MarvelData>([]);
@@ -439,7 +466,6 @@ function HeroesList() {
         renderItem={(heroe: HeroType, index) => <Hero {...heroe.item} />}
         onEndReached={actions.paginate}
       />
-      <Button title={'Paginate'} onPress={() => actions.paginate()} />
     </View>
   );
 }
@@ -451,4 +477,64 @@ function ExampleProvidedComponent({url}: {url: string}) {
     </CachedRequestsProvider>
   );
 }
-export {ApiRequestContext, ExampleProvidedComponent};
+const Comic: React.FC<ComicType> = (props) => {
+  const urlImage =
+    `${props.thumbnail.path}.${props.thumbnail.extension}`.replace(
+      'http://',
+      'https://',
+    );
+  return (
+    <View>
+      <Pressable
+        onPress={() => 1}
+        style={{
+          alignSelf: 'center',
+          marginTop: 20,
+          borderStyle: 'solid',
+          borderColor: 'white',
+          borderWidth: 2,
+          padding: 12,
+          width: 300,
+        }}>
+        <Text style={tw`text-white text-center text-xl mb-1`}>
+          {props.title}
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
+function ComicList() {
+  const [state, actions] = useCachedRequests();
+  const [comics, setComics] = useState<MarvelData>([]);
+  const route = useRoute();
+  const {id, name, description, urlImage} = route.params;
+  const url = `characters/${id}/comics`;
+  useEffect(() => {
+    let data;
+    data = state.data;
+    if (data && data[url] && data[url].data && data[url].data.results) {
+      setComics(data[url].data.results);
+    }
+  }, [state, setComics, url]);
+
+  return (
+    <View>
+      <Text style={tw`text-white text-4xl text-center mt-5`}>Comic list</Text>
+      <FlatList
+        data={comics}
+        keyExtractor={(comic) => comic.id.toString()}
+        renderItem={(comic: HeroType, index) => <Comic {...comic.item} />}
+        onEndReached={actions.paginate}
+      />
+    </View>
+  );
+}
+
+function ComicListComponent({url}: {url: string}) {
+  return (
+    <CachedRequestsProvider maxResultsPerPage={10} url={url}>
+      <ComicList />
+    </CachedRequestsProvider>
+  );
+}
+export {ApiRequestContext, ExampleProvidedComponent, ComicListComponent};
